@@ -61,25 +61,33 @@ var AuthView = Backbone.View.extend({
                 query.find()
                     .then(function (groups) {
 
-                    if (groups.length > 0) {
-                        var currentGroup = groups[0];
+                        if (groups.length > 0) {
+                            var currentGroup = groups[0];
 
-                        console.log(currentGroup, 'add to group');
-                        user.set("group", currentGroup);
-                        return user.save();
-                    } else {
-                        var groupList = new Group({name: groupName});
-                        groupList.save()
-                            .then(function (group) {
-                            console.log(group);
-                            user.set('group', group);
+                            var relation = currentGroup.relation("Users");
+                            relation.add(user);
+                            currentGroup.save();
+
+                            console.log(currentGroup, 'add to group');
+                            user.set("group", currentGroup);
                             return user.save();
-                        });
-                    }
+                        } else {
+                            var groupList = new Group({name: groupName});
+                            groupList.save()
+                                .then(function (group) {
+                                    console.log(group);
+                                    var relation = group.relation("Users");
+                                    relation.add(user);
+                                    group.save();
 
-                }).then(function () {
-                    self.authSuccess();
-                });
+                                    user.set('group', group);
+                                    return user.save();
+                                });
+                        }
+
+                    }).then(function () {
+                        self.authSuccess();
+                    });
             },
             error: function (user, error) {
                 self.showError(error.code + " " + error.message);
@@ -96,14 +104,22 @@ var AuthView = Backbone.View.extend({
 });
 
 
-
 // todo promise practice
-/*setTimeout(function () {
- console.log(1);
- setTimeout(function () {
- console.log(2);
- setTimeout(function () {
- console.log(3);
- }, 100);
- }, 100);
- }, 100);*/
+
+
+var defer = $.Deferred();
+defer.then(function () {
+    setTimeout(function () {
+        console.log(1);
+        // continue
+    }, 50);
+
+    return 1;
+}).then(function (a) {
+    console.log(a += 1);
+    return a;
+}).then(function (b) {
+    console.log(b += 1);
+});
+
+defer.resolve();
